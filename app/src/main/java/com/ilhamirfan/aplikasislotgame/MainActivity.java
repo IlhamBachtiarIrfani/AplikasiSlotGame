@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnGet;
     private TextView tvHasil;
     ArrayList<String> arrayUrl = new ArrayList<>();
+    boolean isPlay=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,51 +50,70 @@ public class MainActivity extends AppCompatActivity {
         btnGet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                execGetImage.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            final String txt =
-                                    loadStringFromNetwork("https://mocki.io/v1/821f1b13-fa9a-43aa-ba9a-9e328df8270e");
-                            try {
-                                JSONArray jsonArray = new
-                                        JSONArray(txt);
-                                for (int i = 0; i <
-                                        jsonArray.length(); i++) {
-                                    JSONObject jsonObject =
-                                            jsonArray.getJSONObject(i);
+                isPlay = !isPlay;
 
-                                    arrayUrl.add(jsonObject.getString("url"));
+                if (isPlay) {
+                    btnGet.setText("Stop");
+                    execGetImage.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                final String txt =
+                                        loadStringFromNetwork("https://mocki.io/v1/821f1b13-fa9a-43aa-ba9a-9e328df8270e");
+                                try {
+                                    JSONArray jsonArray = new
+                                            JSONArray(txt);
+                                    for (int i = 0; i <
+                                            jsonArray.length(); i++) {
+                                        JSONObject jsonObject =
+                                                jsonArray.getJSONObject(i);
+
+                                        arrayUrl.add(jsonObject.getString("url"));
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
-                            } catch (JSONException e) {
+
+                                while (isPlay) {
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Random _random = new Random();
+                                            int i;
+
+                                            i = _random.nextInt(arrayUrl.size());
+                                            Glide.with(MainActivity.this)
+
+                                                    .load(arrayUrl.get(i))
+                                                    .into(imgSlot1);
+
+                                            i = _random.nextInt(arrayUrl.size());
+                                            Glide.with(MainActivity.this)
+
+                                                    .load(arrayUrl.get(i))
+                                                    .into(imgSlot2);
+                                            i = _random.nextInt(arrayUrl.size());
+
+                                            Glide.with(MainActivity.this)
+
+                                                    .load(arrayUrl.get(i))
+                                                    .into(imgSlot3);
+                                            tvHasil.setText(txt);
+                                        }
+                                    });
+                                    try {
+                                        Thread.sleep(200);}
+                                    catch (InterruptedException e) {
+                                        e.printStackTrace(); }
+                                }
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    Glide.with(MainActivity.this)
-
-                                            .load(arrayUrl.get(0))
-                                            .into(imgSlot1);
-
-                                    Glide.with(MainActivity.this)
-
-                                            .load(arrayUrl.get(1))
-                                            .into(imgSlot2);
-
-                                    Glide.with(MainActivity.this)
-
-                                            .load(arrayUrl.get(2))
-                                            .into(imgSlot3);
-                                    tvHasil.setText(txt);
-                                }
-                            });
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
-                    }
-                });
+                    });
+                } else {
+                    btnGet.setText("Start");
+                }
             }
         });
     }
